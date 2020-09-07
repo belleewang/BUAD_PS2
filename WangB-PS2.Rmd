@@ -1,0 +1,184 @@
+---
+title: "Problem Set 2"
+output:
+  html_document:
+    highlight: pygments
+    theme: cerulean
+---
+-----
+
+### NAME: Belle Wang
+### USC ID: 6556024040
+### People I discussed this with: NA
+### **DUE DATE: 9/3 at 9am**
+
+-----
+
+# Notes before you start:
+
+1) Knitting this document will give an error until you do the setup part (first code chunk).
+2) Start by downloading `wine_data_description.html` and `wine_data.Rdata` from blackboard and put them both in your `BUAD312/data` folder.
+3) Open `wine_data_description.html` from your `BUAD312/data` folder and read it.
+4) **A note about this problem set:** Textbook problems are often of the form "Make a barplot of X", which is not at all how problems will be presented to you in real life.  The problems in this problem set are aimed to give you practice in actually using your judgment to decide what the most effective visualization might be for a given "real-world" question.   The premise is that you are a data analyst intern at a (totally fictional) wine rating mobile app company "Whine" and your boss has a bunch of questions about the company's data. Your job as a data analyst is to create visualizations using `R` and `ggplot2` (which we'll load through loading the `tidyverse` package) to answer your boss' questions.
+5) In every case that you are asked to make a plot, make sure that there are informative, human-readable labels for every axis.  Also, make reasonable choices about how you might customize plots (for example, adjusting the `binwidth` parameter for a histogram or adjusting the transparency of points in a scatterplot).
+
+
+# Load tidyverse and the wine rating data set
+
+**Load the tidyverse R package.  Also, load the `.Rdata` file containing the wine data set using the `load()` function.**
+
+```{r setup}
+
+library(tidyverse)
+load("~/Documents/BUAD312/data/wine_data.Rdata")
+
+```
+
+
+# Say hello to the wine rating tibble
+
+
+
+## 1.
+First off, let's figure out how many reviews are in this data set.
+**Print the `wine_data` tibble and use the `nrow` function to see the number of rows in the data set.**
+
+### a) 
+
+```{r question1}
+
+print(wine_data)
+nrow(wine_data)
+
+```
+
+### b) 
+
+For each of the following variables, replace the question mark with the type of the variable (be as specific as you can be).
+
+|variable         |type |
+|:---             |:----|
+|country          | Nominal Categorical |
+|points           | Discrete Numerical |
+|year             | Nominal Categorical  |
+|binned_num_words | Ordinal Categorical  |
+
+## 2.
+
+### a)
+Your manager wants to get a better idea of the distribution of the prices of the wines reviewed in this data set. Is the distribution skewed?  And if yes, is it skewed left or skewed right?  **Make a plot that you think best answers this question. Include labels for each axis and give a short summary of what the plot shows.**
+```{r question2a}
+
+ggplot(wine_data, aes(x=price))+
+  geom_histogram(binwidth=4)+
+  xlim(0, 200)+
+  labs(x="Price", y="Number of Reviews", title="Distribution of the Prices of the Wines")
+  
+
+### The plot is skewed right as seen by the excess tail of outliers on the right. By scaling the graph and setting the x-axis limit, we can see a more clear image of the skewed plot. The overall trend shows that most of the wines reviewed are priced around 25 dollars. As the prices increase, the number of wines reviewed decrease drastically at first and then reaches a plateau. 
+
+ggplot(wine_data, aes(x=price))+
+  geom_histogram(binwidth=0.05)+
+  scale_x_log10()+
+  annotation_logticks()+
+  labs(x="Price", y="Number of Reviews", title="Distribution of the Prices of the Wines")
+
+### By scaling the x-axis, you can see the actual plot without the long tail of outliers being the majority of the graph. Even with the scaling, the skewed right excess tail is apparent.
+
+```
+
+
+### b) 
+
+A product manager wants to know if there needs to be a word limit for the reviews. Some people in the company think that users should have the ability to say as much as they want in their reviews, but the engineering team is concerned that people will abuse this and write extremely long reviews that will take up enormous amounts of storage space. The product manager wants to know the distribution of the number of words in the dataset. **Using the data set, make a plot that you think best answers this question. As always, label all axes and make any adjustments to the plot as you see fit.  Do you think the engineering team's concern is well-founded? Why or why not?**
+
+```{r question2b}
+
+ggplot(wine_data, aes(x=num_words))+
+  geom_histogram(binwidth=2)+
+  labs(x="Number of Words", y="Number of Reviews", title="Distribution of the Number of Words")
+
+### Because the graph is relatively evenly distributed with a slight skew to the right, I do not think it is that big of a concern at the moment. The majority of the words seem to only be around 40 which is an appropriate amount and is even characterized as a low word count. However, if more outliers (an excess tail) to the right of the graph appear, the concern would be more valid since more reviewers are writing extremely long reviews compared to the average. 
+```
+
+## 3.
+
+### a)
+
+Another day, another question from your manager. Your manager suspects that the more that a reviewer likes a wine, the more this reviewer will tend to write about the wine.  She asks you for a plot that might be used to investigate whether her hunch holds.
+
+**Make two plots, one based on `num_words` and one based on `binned_num_words` that would help your manager to investigate this.  Do not use faceting for this problem.  Do the plots support your manager's intuition?**
+```{r question3a}
+
+ggplot(wine_data, aes(x=num_words, y=points))+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  labs(x="Number of Words", y="Rating (1-100)", title="Relationship between Ratings and Numbers of Words in the Review")
+
+ggplot(wine_data, aes(x=binned_num_words, y=points))+
+  geom_boxplot()+
+  geom_smooth(method = "lm")+
+  labs(x="Number of Words", y="Rating (1-100)", title="Relationship between Ratings and Numbers of Words in the Review")
+
+### Yes the plots support the manager's intuition. As seen by the positive trend line, the higher the points/reviews, the more words are written in that review. 
+```
+
+
+### b) 
+Your manager is on vacation and it is rather slow in the office, so you decide to explore the wine data set. You know that most of the users of your app live in the U.S. and you wonder whether the users give higher ratings to wines made in the U.S. Fortunately, you've already made a data set of the reviews for wines made in the U.S., France, and Italy called `three_country_data`. **Using three_country_data, make a plot that compares the distribution of ratings for each country. Do you see evidence that U.S. raters favor wines from the U.S.? Why or why not?**
+```{r question3c}
+
+three_country_data <- wine_data %>% filter(country %in% c("US", "France", "Italy"))
+
+ggplot(three_country_data, aes(x=points))+
+  geom_boxplot()+facet_wrap(~ country)+
+  labs(x="Ratings (1-100)", title="Distribution of Ratings for Each Country")
+
+### No, the average ratings for the three countries were approximately the same around 89 points. In fact, France had a higher median rating compared to the US which disproves the theory that users give higher ratings to wines made in the US. The distribution differences between all three countries are so small that the evidence does not show the U.S. raters favoring wines from the U.S.
+```
+
+## 4.
+Your coworker is planning a wine tasting vacation in France. She is convinced that "Whine" app users choose to review wines from only the best provinces in France. **Using france_wine_data, make a plot of the number of reviewed wines from France by province. Which region do you think your coworker should visit?**
+```{r question4}
+
+france_wine_data <- wine_data %>% filter(country == "France")
+
+ggplot(france_wine_data, aes(x=province))+
+  geom_bar()+
+  labs(x="Provinces in France", y="Number of Reviewed Wines", title="Number of Reviewed Wines from France by Province")
+
+### The coworker should visit Bordeaux because they have the most reviews which, according to her logic, means it is the best province.
+```
+
+## 5.
+
+### a)
+The product manager from question 2b is back again. She just got back from a meeting with her boss who wants to know if there is any visual evidence of a relationship between the points given to a wine and the ratio of positive to negative words in its review. **Make a plot of this relationship. Do you think there is any clear evidence of a relationship between these two variables? Why or why not?**
+
+```{r question5a}
+
+ggplot(wine_data, aes(x=points, y=pos_neg_sentiment_ratio))+
+  geom_point(alpha=0.1)+
+  geom_smooth(method = "lm")+
+  labs(x="Points (1-100)", y="Positive/Negative Word Ratio", title="Relationship Between Points and Pos/Neg Word Ratio")
+
+### There is little clear evidence of a relationship between these two variables. If any, there is a small positive relationship in which the ratio of positive to negative words is higher with the greater ratings/points. However, the majority of observations show the same positive to negative ratio even as the point value increases.
+```
+
+### b) 
+The product manager upon seeing the plot you made for 5a wants to know what this looks like if broken down by country.  She only wants to see this for the US, France, and Italy, so you should use `three_country_data`.
+ **Make a plot that best answers her question. Consider transforming the x-axis.**
+```{r question5b}
+
+ggplot(three_country_data, aes(x=price, y=pos_neg_sentiment_ratio))+
+  geom_point(alpha=0.1)+
+  geom_smooth(method = "lm")+
+  scale_x_log10()+
+  facet_wrap(~ country)+
+  labs(x="Price", y="Positive/Negative Word Ratio", title="Relationship Between Price and Pos/Neg Word Ratio per Country")
+
+```
+
+
+# What You Should Upload to Blackboard
+Knit this .Rmd file into an html file. Upload both the .html and .Rmd files as a **single** .zip file to Blackboad by the due date. You can find instructions for making a .zip file on Piazza: https://piazza.com/class/k54ht3tm1d64u5?cid=11
